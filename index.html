@@ -109,7 +109,6 @@
 <div id="suggestBox" style="position:absolute;bottom:100%;left:0;right:0;background:#2d2d2d;border:1px solid #444;z:9999;max-height:260px;overflow-y:auto;display:none;"></div>
     </div>
     <button id="submitBtn">提交猜测</button>
-    <button id="restartBtn">再来一把</button>
 </div>
 
 <div id="msgBox"></div>
@@ -5547,5 +5546,10 @@ function refreshWinRateDisplay(){
 renderStatPanel();
 }
 </script>
+<!-- 重启按钮放置页面最底部，远离输入框 -->
+<div style="margin-top:40px;padding-top:20px;border-top:1px solid #444;text-align:center;">
+    <button id="restartBtn" style="padding:12px 30px;background:#3498db;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;">再来一把</button>
+    <div style="margin-top:8px;font-size:13px;color:#aaa;">如需重开本局，请点击上方按钮</div>
+</div>
 </body>
 </html>
