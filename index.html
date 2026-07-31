@@ -102,6 +102,9 @@
 <div class="tip">所有敌人数据默认为0级</div>
 <div class="tip">近地悬浮设定为飞行单位</div>
 <div id="statPanel"></div>
+<div style="text-align:center;margin:8px 0;color:#ffdd66;font-size:16px;">
+本局用时：<span id="timeText">00:00</span>
+</div>
 <div class="tip" id="countTip"></div>
 <div class="input-area">
     <div style="position:relative;display:inline-block;width:70%;">
@@ -126,10 +129,15 @@
 // ===================== 游戏全局配置 =====================
 const MAX_GUESS = 8; // 最大猜测次数，可以自行修改
 
+
 // 提示框全局可见变量（全局，所有函数都能读取）
 let hintVisible = false;
 let targetEnemy = null;
 let gameOver = false;
+// ========== 计时器新增全局变量 ==========
+let timerId = null;    // 定时器ID，用来停止计时
+let startTime = 0;     // 本局开始时间戳
+let isTiming = false;  // 是否正在计时标记
 
 // 联想搜索核心函数：输入文本，返回匹配的敌人对象列表
 function getMatchList(keyword) {
@@ -201,6 +209,21 @@ document.addEventListener("click", (e) => {
         box.style.display = "none";
     }
 });
+
+// 格式化秒数为 00:00
+function formatSeconds(totalSec){
+    const m = Math.floor(totalSec / 60).toString().padStart(2,"0");
+    const s = (totalSec % 60).toString().padStart(2,"0");
+    return `${m}:${s}`;
+}
+
+// 实时刷新计时文本
+function updateTimerDisplay(){
+    if(!isTiming) return;
+    const diff = Math.floor((Date.now() - startTime) / 1000);
+    document.getElementById("timeText").innerText = formatSeconds(diff);
+}
+
 // ===================== 自定义词条区域 =====================
 // type:"number" 数值词条：只有绿色/黄色，无灰色
 // type:"text" 文本词条：绿色/灰色，无高低
@@ -5346,6 +5369,11 @@ function refreshCountTip(){
 
 // 初始化新一局游戏（重启函数）
 function initNewGame(){
+    // 重置计时器
+    if(timerId !== null) clearInterval(timerId);
+    timerId = null;
+    isTiming = false;
+    document.getElementById("timeText").innerText = "00:00";
     gameOver = false;
     guessCount = 0;
     guessHistory = [];
@@ -5435,6 +5463,12 @@ function renderHistoryTable(){
 function submit(){
     if(gameOver) return;
     const input = document.getElementById("answerInput").value.trim();
+// 首次提交，开启计时器
+    if(!isTiming){
+        startTime = Date.now();
+        isTiming = true;
+        timerId = setInterval(updateTimerDisplay, 1000);
+    }
     const msgBox = document.getElementById("msgBox");
     if(!input){
         msgBox.innerHTML = `<div style="color:#fa4">请输入敌人名称！</div>`;
@@ -5464,8 +5498,12 @@ function submit(){
 
     // 判断猜对
 if(checkName(input)){
+    // 停止计时
+    clearInterval(timerId);
+    isTiming = false;
+    const usedSec = Math.floor((Date.now() - startTime)/1000);
     gameOver = true;
-    msgBox.innerHTML = `<div class="win">恭喜！猜对了！目标敌人：【${targetEnemy.name}】</div>`;
+    msgBox.innerHTML = `<div class="win">恭喜！猜对了！目标敌人：【${targetEnemy.name}】;<br>本局用时：${formatSeconds(usedSec)}</div>`;
     document.getElementById("answerInput").disabled = true;
     stat.winGame += 1; //✅胜利+1
     stat.totalGame += 1;
@@ -5495,8 +5533,12 @@ document.getElementById("sideHint").innerText = hintText;
 
   //判断次数用尽
 if(guessCount >= MAX_GUESS){
+    // 停止计时
+    clearInterval(timerId);
+    isTiming = false;
+    const usedSec = Math.floor((Date.now() - startTime)/1000);
     gameOver = true;
-    msgBox.innerHTML += `<div class="lose">次数耗尽，游戏结束！正确敌人：【${targetEnemy.name}】</div>`;
+    msgBox.innerHTML += `<div class="lose">次数耗尽，游戏结束！正确敌人：【${targetEnemy.name}】;<br>本局用时：${formatSeconds(usedSec)}</div>`;
     document.getElementById("answerInput").disabled = true;
     stat.totalGame += 1; // 失败也计入总对局
 // 失败，清空当前连胜
